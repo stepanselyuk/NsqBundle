@@ -55,8 +55,7 @@ class SoclozNsqExtension extends Extension
                 'Socloz\NsqBundle\Topic\Topic',
                 array($name)
             );
-            $tsd->setFactoryService('socloz.nsq');
-            $tsd->setFactoryMethod('getTopic');
+            $tsd->setFactory(['socloz.nsq','getTopic']);
             $container->setDefinition('socloz.nsq.topic.' . $name, $tsd);
         }
     }
