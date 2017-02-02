@@ -121,6 +121,41 @@ class Topic
         $this->nsq->publish($this->name, $message);
     }
 
+    public function mpublish(array $payload, $delay = 0)
+    {
+        if ($delay > 0) {
+            if (!$this->delayedMessagesTopic) {
+                throw new \Exception(
+                    "Cannot handle delayed multiple messages with no delayed messages's topic"
+                );
+            }
+            $msgs = [];
+            foreach ($payload as $item) {
+                $msgs[] = new DelayedMessage(
+                    $this->name,
+                    (string)$item,
+                    $delay
+                );
+            }
+            $this->delayedMessagesTopic->mpublish($msgs);
+            return;
+        }
+        $this->doMPublish($payload);
+    }
+
+    protected function doMPublish(array $payload)
+    {
+        if (!$this->publishToDone) {
+            $this->nsq->publishTo($this->publishToHosts);
+            $this->publishToDone = true;
+        }
+        $msgs = [];
+        foreach ($payload as $item) {
+            $msgs[] = new Message((string)$item);
+        }
+        $this->nsq->mpublish($this->name, $msgs);
+    }
+
     public function consume(array $channels = array(), $timeout = null)
     {
         if (!$this->consumers) {
